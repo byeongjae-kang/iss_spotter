@@ -1,34 +1,37 @@
-const request = require("request");
+
+const request = require('request');
 
 const fetchMyIP = function(callback) {
-  request('https://api.ipify.org', (err, response) => {
-    const {body: ipAddress} = response;
-    if (err) {
-      callback(err, null);
-      process.exit();
-    }
+  request('https://api.ipify.org?format=json', (error, response, body) => {
+    if (error) return callback(error, null);
+
     if (response.statusCode !== 200) {
-      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${ipAddress}`;
-      callback(Error(msg), null);
-      process.exit();
+      callback(Error(`Status Code ${response.statusCode} when fetching IP: ${body}`), null);
+      return;
     }
-    callback(err, ipAddress);
+
+    const ip = JSON.parse(body).ip;
+    callback(null, ip);
   });
 };
 
-const fetchCoordsByIP = (ip, callback) => {
-  request(`http://api.open-notify.org/iss/v1/?lat=40.027435&lon=-105.251945`, (err, response, body) => {
-    if (err) {
-      callback(err, body);
-      process.exit();
+
+const fetchCoordsByIP = function(ip, callback) {
+  request(`https://freegeoip.app/json/${ip}`, (error, response, body) => {
+    if (error) {
+      callback(error, null);
+      return;
     }
+
     if (response.statusCode !== 200) {
-      const msg = `Status Code ${response.statusCode} when fetching coordinates for IP.   Response: ${body}`;
-      callback(Error(msg), null);
-      process.exit();
+      callback(Error(`Status Code ${response.statusCode} when fetching Coordinates for IP: ${body}`), null);
+      return;
     }
-    const {latitude, longitude} = JSON.parse(body).request;
-    callback(err, {latitude, longitude});
+
+    const { latitude, longitude } = JSON.parse(body);
+    // console.log('lat/lng data:', { latitude, longitude });
+
+    callback(null, { latitude, longitude });
   });
 };
 
@@ -42,7 +45,7 @@ const fetchISSFlyOverTimes = function(coords, callback) {
     }
 
     if (response.statusCode !== 200) {
-      callback((`Status Code ${response.statusCode} when fetching ISS pass times: ${body}`), null);
+      callback(Error(`Status Code ${response.statusCode} when fetching ISS pass times: ${body}`), null);
       return;
     }
 
