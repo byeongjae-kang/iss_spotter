@@ -16,27 +16,28 @@ const fetchMyIP = function(callback) {
 };
 
 
-const fetchCoordsByIP = function(ip, callback) {
-  request(`https://freegeoip.app/json/${ip}`, (error, response, body) => {
+const fetchCoordsByIP = function(callback) {
+  request(`http://api.open-notify.org/iss/v1/?lat=40.027435&lon=-105.251945`, (error, response, body) => {
     if (error) {
       callback(error, null);
       return;
     }
-
+    
+    
     if (response.statusCode !== 200) {
-      callback(Error(`Status Code ${response.statusCode} when fetching Coordinates for IP: ${body}`), null);
+      callback((`Status Code ${response.statusCode} when fetching Coordinates for IP: ${body}`), null);
       return;
     }
 
-    const { latitude, longitude } = JSON.parse(body);
-    // console.log('lat/lng data:', { latitude, longitude });
+    const { latitude, longitude } = JSON.parse(body).request;
+    
 
     callback(null, { latitude, longitude });
   });
 };
 
-const fetchISSFlyOverTimes = function(coords, callback) {
-  const url = `http://api.open-notify.org/iss-pass.json?lat=${coords.latitude}&lon=${coords.longitude}`;
+const fetchISSFlyOverTimes = (callback) => {
+  const url = `http://api.open-notify.org/iss/v1/?lat=40.027435&lon=-105.251945`;
 
   request(url, (error, response, body) => {
     if (error) {
@@ -45,7 +46,7 @@ const fetchISSFlyOverTimes = function(coords, callback) {
     }
 
     if (response.statusCode !== 200) {
-      callback(Error(`Status Code ${response.statusCode} when fetching ISS pass times: ${body}`), null);
+      callback((`Status Code ${response.statusCode} when fetching ISS pass times: ${body}`), null);
       return;
     }
 
@@ -60,12 +61,12 @@ const nextISSTimesForMyLocation = function(callback) {
       return callback(error, null);
     }
 
-    fetchCoordsByIP(ip, (error, loc) => {
+    fetchCoordsByIP((error, loc) => {
       if (error) {
         return callback(error, null);
       }
 
-      fetchISSFlyOverTimes(loc, (error, nextPasses) => {
+      fetchISSFlyOverTimes((error, nextPasses) => {
         if (error) {
           return callback(error, null);
         }
